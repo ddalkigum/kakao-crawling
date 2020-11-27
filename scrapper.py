@@ -6,12 +6,12 @@ from selenium import webdriver
 
 
 pagination_number = [2, 3, 4, 5, 6, 7, 8, 9]
-category_number = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+category_number = [10]
 category_name = [
     "toy",
     "living",
     "stuff",
-    "no",
+    "write",
     "cloths",
     "pajama",
     "travel",
@@ -25,11 +25,11 @@ driver.get("https://store.kakaofriends.com/kr/index")
 driver.implicitly_wait(3)
 item_lists = []
 
-driver.find_element_by_xpath('//*[@id="innerHead"]/div/button[2]').click()
-time.sleep(1.5)
-driver.find_element_by_xpath("/html/body/div[6]/div/div/div/ul/li[4]").click()
-driver.implicitly_wait(2)
-driver.find_element_by_xpath(f"/html/body/div[6]/div/div/div/ul/li[4]/ul/li[3]").click()
+# driver.find_element_by_xpath('//*[@id="innerHead"]/div/button[2]').click()
+# time.sleep(1.5)
+# driver.find_element_by_xpath("/html/body/div[6]/div/div/div/ul/li[4]").click()
+# driver.implicitly_wait(2)
+# driver.find_element_by_xpath(f"/html/body/div[6]/div/div/div/ul/li[4]/ul/li[3]").click()
 
 
 def get_current_item(r):
@@ -38,38 +38,38 @@ def get_current_item(r):
     box = container.find("ul")
     item_list = box.find_all("li")
     for item in item_list:
-        item_set = item.find("a")
-        item_price = (
-            item_set.find("p", {"class", "item__Price-sc-5t2pho-3"})
-            .get_text()
-            .strip("금액")
-        )
+        item_set = item.find("a", {"class", "item__Link-sc-5t2pho-10"})
+        item_price = item_set.find("p", {"class", "jXNMZp"}).get_text().strip("금액")
         item_name = item_set.find("p").get_text()
-        item_list = {"name": item_name, "price": item_price}
+        item_image = item_set.find("img")["src"]
+        item_list = {"name": item_name, "price": item_price, "image": item_image}
         item_lists.append(item_list)
 
+    return item_lists
 
-def click_page():
-    driver.implicitly_wait(2)
+
+def click_page(number):
+    driver.implicitly_wait(10)
     for page_number in pagination_number:
+        req = driver.page_source
+        get_current_item(req)
+        time.sleep(1)
+        print("item_copy... ")
         try:
-            try:
-                req = driver.page_source
-                get_current_item(req)
-                time.sleep(1)
-                print("item_copy... ")
-            except AttributeError:
-                print("has AttributeError")
-                continue
             driver.find_element_by_xpath(
                 f'//*[@id="mArticle"]/div[5]/div/span[{page_number}]'
             ).click()
             print(f"page is {page_number}")
-            driver.implicitly_wait(3)
         except Exception:
-            print("page end")
-            continue
-    itemlist_to_csv(item_lists, 1)
+            print("end page")
+            break
+        driver.implicitly_wait(3)
+    file = open(f"kakao_itemlist{number}.csv", mode="w")
+    writer = csv.writer(file)
+    writer.writerow(["name", "price", "image"])
+
+    for item in item_lists:
+        writer.writerow(list(item.values()))
 
 
 def itemlist_to_csv(arr, number):
@@ -80,32 +80,22 @@ def itemlist_to_csv(arr, number):
         writer.writerow(list(item.values()))
 
 
-click_page()
-
-
 def move_category():
+    driver.implicitly_wait(2)
     for number in category_number:
-        try:
-            driver.find_element_by_xpath('//*[@id="innerHead"]/div/button[2]').click()
-            time.sleep(1.5)
-            driver.find_element_by_xpath(
-                "/html/body/div[6]/div/div/div/ul/li[4]"
-            ).click()
-            driver.implicitly_wait(2)
-            driver.find_element_by_xpath(
-                f"/html/body/div[6]/div/div/div/ul/li[4]/ul/li[{number}]"
-            ).click()
-            driver.implicitly_wait(2)
-            # 뒤로가기
-            time.sleep(1)
-            driver.back()
-            driver.implicitly_wait(2)
-            print(f"{category_name[number-3]} copy...")
-            click_page()
-            driver.implicitly_wait(2)
+        driver.find_element_by_xpath('//*[@id="innerHead"]/div/button[2]').click()
+        time.sleep(1.5)
+        driver.find_element_by_xpath("/html/body/div[6]/div/div/div/ul/li[4]").click()
+        driver.implicitly_wait(2)
+        driver.find_element_by_xpath(
+            f"/html/body/div[6]/div/div/div/ul/li[4]/ul/li[{number}]"
+        ).click()
+        click_page(number)
+        # 뒤로가기
+        driver.back()
+        print(f"{category_name[number-3]} copy...")
+        driver.implicitly_wait(2)
 
-        except Exception:
-            if number == 12:
-                break
-            else:
-                continue
+
+move_category()
+driver.quit()
