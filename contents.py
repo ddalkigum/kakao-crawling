@@ -12,7 +12,7 @@ def no_space(text):
     """
 
     i hate blank !!
-    This function can help you from blank 
+    This function can help you from blank
 
     """
     text1 = re.sub("&nbsp;| \n|\t|\r", "", text)
@@ -20,13 +20,60 @@ def no_space(text):
     return text2
 
 
-# driver = webdriver.Chrome()
-# driver.get("https://store.kakaofriends.com/kr/index")
-# driver.implicitly_wait(2)
-"""
-Top == Public use
+def write_csv(number, args, kwargs):
+    file = open(f"detail_page{number}.csv", mode="w")
+    writer = csv.writer(file)
+    writer.writerow([*args, *kwargs])
 
-"""
+
+def get_lastpage(src):
+    time.sleep(1)
+    soup = BeautifulSoup(src, "html.parser")
+    pagination = soup.find("div", {"class", "list__ListFooter-sc-1wem0pv-8"})
+    last_page = pagination.find_all("span", {"class", "hcZclE"})[-1].get_text()
+    return last_page
+
+
+def get_detail_contents(src, number):
+    image_arr = []
+    text_arr = []
+    soup = BeautifulSoup(src, "html.parser")
+    detail_container = soup.find("div", {"class", "ffhpwj"})
+    detail_text = detail_container.find_all("div", {"class", "byMKtG"})
+    for t in detail_text:
+        text = t.get_text()
+        clean_text = no_space(text)
+        text_arr.append(clean_text)
+    image_list = detail_container.find_all("a")["href"]
+    for image in image_list:
+        image_arr.append(image)
+    write_csv(text_arr, image_arr)
+
+
+driver = webdriver.Chrome()
+driver.get("https://store.kakaofriends.com/kr/index")
+driver.implicitly_wait(2)
+driver.find_element_by_xpath('//*[@id="innerHead"]/div/button[2]').click()
+driver.implicitly_wait(2)
+driver.find_element_by_xpath("/html/body/div[6]/div/div/div/ul/li[4]").click()
+time.sleep(1)
+driver.find_element_by_xpath(f"/html/body/div[6]/div/div/div/ul/li[4]/ul/li[3]").click()
+page_src = driver.page_source
+page_number = int(get_lastpage(page_src))
+for i in range(2, page_number):
+    driver.implicitly_wait(2)
+    print(f"page {i-1} scrapping.... ")
+    next_page = driver.find_element_by_xpath(
+        f'//*[@id="mArticle"]/div[5]/div/div[{i}]'
+    ).click()
+    for j in range(1, 40):
+        driver.implicitly_wait(2)
+        driver.find_element_by_xpath(f'//*[@id="mArticle"]/div[4]/ul/li[{j}]/a').click()
+        detail_src = driver.page_source
+        get_detail_contents(detail_src, i)
+        driver.back()
+
+
 # for number in category_number:
 #    driver.find_element_by_xpath('//*[@id="innerHead"]/div/button[2]').click()
 #    time.sleep(1.5)
@@ -45,36 +92,14 @@ Top == function part
 Bottom == Test part
  
 """
-# driver.find_element_by_xpath('//*[@id="innerHead"]/div/button[2]').click()
-# driver.implicitly_wait(2)
-# driver.find_element_by_xpath("/html/body/div[6]/div/div/div/ul/li[4]").click()
-# driver.implicitly_wait(2)
-# driver.find_element_by_xpath(f"/html/body/div[6]/div/div/div/ul/li[4]/ul/li[3]").click()
-# page_source = driver.page_source
-#
+
 # soup = BeautifulSoup(page_source, "html.parser")
 # item_container = soup.find("div", {"class", "cont_list"})
 # item_box = item_container.find("ul")
 # item_list = item_box.find_all("li")
 # for item in item_list:
-#    item_link = item.find("a", {"class", "kGHQwh"})["href"]
-#    link_list.append(item_link)
+#   item_link = item.find("a", {"class", "kGHQwh"})["href"]
+#   link_list.append(item_link)
 # print(link_list)
-
 # for url in link_list:
-#    current_url = f"https://store.kakaofriends.com{url}"
-
-driver = webdriver.Chrome()
-
-driver.get("https://store.kakaofriends.com/kr/products/7531")
-source = driver.page_source
-soup = BeautifulSoup(source, "html.parser")
-detail_container = soup.find("div", {"class", "ffhpwj"})
-detail_text = detail_container.get_text()
-clean_text = no_space(detail_text)
-print(clean_text)
-
-
-//*[@id="mArticle"]/div[4]/ul/li[1]/a
-//*[@id="mArticle"]/div[4]/ul/li[2]/a
-//*[@id="mArticle"]/div[4]/ul/li[5]/a
+#   current_url = f"https://store.kakaofriends.com{url}"

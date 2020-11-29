@@ -1,15 +1,14 @@
-import requests
-from bs4 import BeautifulSoup
+import csv
 
-arr = []
 
-r = requests.get(
-    "https://store.kakaofriends.com/kr/products/category/subject?categorySeq=64&sort=createDatetime,desc"
-)
-soup = BeautifulSoup(r.text, "html.parser")
-container = soup.find("div", {"class", "cont_list"})
-box = container.find("ul")
-item_list = box.find_all("li")
-for i in item_list:
-    img = i.find("img")
-    img_source = img.attrs["href"]
+my_name = ["kim", "jin", "ah", "gogo"]
+arr = ["img1", "img2", "img3", "img4", "img5"]
+
+
+def write_csv(args, kwargs):
+    file = open("text.csv", mode="w")
+    writer = csv.writer(file)
+    writer.writerow([*args, *kwargs])
+
+
+write_csv(my_name, arr)
