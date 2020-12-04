@@ -43,16 +43,19 @@ def get_current_item(r):
     container = soup.find("div", {"class", "cont_list"})
     box = container.find("ul")
     item_list = box.find_all("li")
+    print(len(item_list))
     for item in item_list:
-        item_set = item.find("a", {"class", "item__Link-sc-5t2pho-10"})
-        item_price = (
-            item_set.find("p", {"class", "jXNMZp"}).get_text().strip(" 금액 원 , ")
-        )
+        time.sleep(1)
+        item_set = item.find("a")
         item_name = item_set.find("p").get_text()
+        if item_name == "[온라인 전용]자이언트 소파쿠션_리틀라이언":
+            pass
+        item_price = item_set.find("p", {"class", "item__Price-sc-5t2pho-3"}).get_text().strip("원 , ")
+        print(item_price)
         item_image = item_set.find("img")["src"]
         item_list = {"name": item_name, "price": item_price, "image": item_image}
         item_lists.append(item_list)
-
+        print(item_lists)
     return item_lists
 
 

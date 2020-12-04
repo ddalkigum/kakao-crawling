@@ -21,12 +21,19 @@ def no_space(text):
 
 
 def write_csv(number, args, kwargs):
+    """
+    wrtie csv file
+    need fix( save )
+    """
     file = open(f"detail_page{number}.csv", mode="w")
     writer = csv.writer(file)
     writer.writerow([*args, *kwargs])
 
 
 def get_lastpage(src):
+    """
+    get last page from each category
+    """
     time.sleep(1)
     soup = BeautifulSoup(src, "html.parser")
     pagination = soup.find("div", {"class", "list__ListFooter-sc-1wem0pv-8"})
@@ -34,44 +41,68 @@ def get_lastpage(src):
     return last_page
 
 
-def get_detail_contents(src, number):
+def get_detail_contents(src):
+    """
+    get detail description and photo
+    """
     image_arr = []
     text_arr = []
     soup = BeautifulSoup(src, "html.parser")
     detail_container = soup.find("div", {"class", "ffhpwj"})
     detail_text = detail_container.find_all("div", {"class", "byMKtG"})
+
     for t in detail_text:
         text = t.get_text()
         clean_text = no_space(text)
         text_arr.append(clean_text)
-    image_list = detail_container.find_all("a")["href"]
+    image_list = detail_container.find_all("img")
     for image in image_list:
-        image_arr.append(image)
-    write_csv(text_arr, image_arr)
+        image_arr.append(image["src"])
+    return image_arr, text_arr
 
+
+# driver = webdriver.Chrome()
+# driver.get("https://store.kakaofriends.com/kr/index")
+# driver.implicitly_wait(2)
+# driver.find_element_by_xpath('//*[@id="innerHead"]/div/button[2]').click()
+# driver.implicitly_wait(2)
+# driver.find_element_by_xpath("/html/body/div[6]/div/div/div/ul/li[4]").click()
+# time.sleep(1)
+# driver.find_element_by_xpath(f"/html/body/div[6]/div/div/div/ul/li[4]/ul/li[3]").click()
+# page_src = driver.page_source
 
 driver = webdriver.Chrome()
-driver.get("https://store.kakaofriends.com/kr/index")
-driver.implicitly_wait(2)
-driver.find_element_by_xpath('//*[@id="innerHead"]/div/button[2]').click()
-driver.implicitly_wait(2)
-driver.find_element_by_xpath("/html/body/div[6]/div/div/div/ul/li[4]").click()
-time.sleep(1)
-driver.find_element_by_xpath(f"/html/body/div[6]/div/div/div/ul/li[4]/ul/li[3]").click()
+driver.get(
+    "https://store.kakaofriends.com/kr/products/category/subject?categorySeq=64&sort=createDatetime,desc"
+)
+
 page_src = driver.page_source
 page_number = int(get_lastpage(page_src))
-for i in range(2, page_number):
-    driver.implicitly_wait(2)
-    print(f"page {i-1} scrapping.... ")
-    next_page = driver.find_element_by_xpath(
-        f'//*[@id="mArticle"]/div[5]/div/div[{i}]'
-    ).click()
-    for j in range(1, 40):
+for i in range(1, page_number):
+    if i == 1:
+        print("page 1 scrapping ...")
+        for j in range(1, 40):
+            driver.implicitly_wait(2)
+            driver.find_element_by_xpath(
+                f'//*[@id="mArticle"]/div[4]/ul/li[{j}]/a'
+            ).click()
+            detail_src = driver.page_source
+            get_detail_contents(detail_src, i)
+            driver.back()
+    else:
         driver.implicitly_wait(2)
-        driver.find_element_by_xpath(f'//*[@id="mArticle"]/div[4]/ul/li[{j}]/a').click()
-        detail_src = driver.page_source
-        get_detail_contents(detail_src, i)
-        driver.back()
+        print(f"page {i-1} scrapping... ")
+        next_page = driver.find_element_by_xpath(
+            f'//*[@id="mArticle"]/div[5]/div/div[{i}]'
+        ).click()
+        for j in range(1, 40):
+            driver.implicitly_wait(2)
+            driver.find_element_by_xpath(
+                f'//*[@id="mArticle"]/div[4]/ul/li[{j}]/a'
+            ).click()
+            detail_src = driver.page_source
+            get_detail_contents(detail_src)
+            driver.back()
 
 
 # for number in category_number:
